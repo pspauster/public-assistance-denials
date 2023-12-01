@@ -1,11 +1,12 @@
 library(tidyverse)
 library(httr)
 library(curl)
+library(lubridate)
 
 options(scipen = 999)
 
 ##################state data ################
-#not as helpful - only has to January
+#these are only recurring not emergency, says Emma
 
 opened_cases <- read_csv(URLencode(
   "https://data.ny.gov/resource/fivj-j6mz.csv?district='New York City'")
@@ -33,7 +34,7 @@ opens_state_clean <- opened_cases %>%
 
 opened_denied <- inner_join(opens_state_clean, denials_state_clean, by = c("year", "month")) %>% 
   mutate(approval_rate = total_openings/(total_openings+total_denials),
-         date = my(paste(month, year)),
+         date = lubridate::my(paste(month, year)),
          total_processed = total_openings+total_denials)
   
 ggplot(opened_denied)+
@@ -98,6 +99,8 @@ ggplot(ca_apps_clean)+
        x = "Date",
        title = "Cash Assistance Applications fose sharply in 2021")
 
+write_csv(ca_apps_clean, "data/applications_monthly.csv")
+
 ggplot(ca_apps_clean)+
   geom_line(mapping = aes(x = valuedate, y = cumulative_apps))+
   labs(subtitle = "Cumulative Monthly Cash Assistance Applications since July 2015",
@@ -117,6 +120,8 @@ ggplot(ca_approval_clean)+
        y = "Cash assistance application approval rate",
        x = "Date",
        title = "Cash Assistance Applications are getting denied more often")
+
+write_csv(ca_approval_clean, "data/approval_rate.csv")
 
 
 ############## rejection reasons ###########################
@@ -190,4 +195,8 @@ rejection_reason_clean %>% filter(
   geom_line(aes(x = quarter_start_date, y = proportion_rejections, group=rejection_code_description, color = color))+
   scale_color_identity(labels = c(blue = "Failure to Keep/Complete",gray = "Other"),guide = "legend")
 
-
+rejection_reason_clean %>% filter(
+  quarter_start_date >= as.Date("2020-01-01")
+) %>% 
+  select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
+  write_csv("data/denial_reasons.csv")
