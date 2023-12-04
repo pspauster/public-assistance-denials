@@ -149,7 +149,8 @@ rejection_reason_clean <- cash_assistance_rejections %>%
   ungroup()
 
 reasons <- rejection_reason_clean %>% 
-  select(1:2) %>% 
+  select(1:5) %>% 
+  arrange(nys_wms_rejection_code, desc(quarter_start_date)) %>% 
   group_by(nys_wms_rejection_code) %>% 
   summarize(rejection_code_description = first(rejection_code_description))
 
@@ -198,7 +199,8 @@ rejection_reason_clean %>% filter(
 denials_wide <- rejection_reason_clean %>% filter(
   quarter_start_date >= as.Date("2020-01-01")
 ) %>% 
-  select(quarter_start_date, proportion_rejections, rejection_code_description) %>% 
+  select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
+  left_join(reasons) %>% 
   group_by(quarter_start_date, rejection_code_description) %>% 
   summarize(proportion_rejections = max(proportion_rejections)*100) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
