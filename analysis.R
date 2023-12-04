@@ -195,8 +195,12 @@ rejection_reason_clean %>% filter(
   geom_line(aes(x = quarter_start_date, y = proportion_rejections, group=rejection_code_description, color = color))+
   scale_color_identity(labels = c(blue = "Failure to Keep/Complete",gray = "Other"),guide = "legend")
 
-rejection_reason_clean %>% filter(
+denials_wide <- rejection_reason_clean %>% filter(
   quarter_start_date >= as.Date("2020-01-01")
 ) %>% 
-  select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
-  write_csv("data/denial_reasons.csv")
+  select(quarter_start_date, proportion_rejections, rejection_code_description) %>% 
+  group_by(quarter_start_date, rejection_code_description) %>% 
+  summarize(proportion_rejections = max(proportion_rejections)) %>% 
+  pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
+  
+write_csv(denials_wide, "data/denial_reasons.csv")
