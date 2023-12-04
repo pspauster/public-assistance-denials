@@ -200,7 +200,7 @@ denials_wide <- rejection_reason_clean %>% filter(
 ) %>% 
   select(quarter_start_date, proportion_rejections, rejection_code_description) %>% 
   group_by(quarter_start_date, rejection_code_description) %>% 
-  summarize(proportion_rejections = max(proportion_rejections)) %>% 
+  summarize(proportion_rejections = max(proportion_rejections)*100) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
   
 write_csv(denials_wide, "data/denial_reasons.csv")
