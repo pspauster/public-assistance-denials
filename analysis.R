@@ -128,6 +128,26 @@ write_csv(ca_approval_clean, "data/approval_rate.csv")
 
 cash_assistance_rejections <- read_csv(URLencode("https://data.cityofnewyork.us/resource/g6pg-qint.csv?$limit=20000"))
 
+total_rejections <- cash_assistance_rejections %>% 
+  separate(date, sep = "-", into = c("quarter_start_date", "quarter_end_date")) %>% 
+  separate(nys_wms_rejection_code, sep = "-", into = c("nys_wms_rejection_code", "rejection_code_description")) %>% 
+  mutate(quarter_start_date = mdy(quarter_start_date)) %>% 
+  filter(nys_wms_rejection_code == "Total", type_of_government_assistance == "Cash Assistance") %>% 
+  mutate(total = as.numeric(str_replace(total, "[*,]", "")),
+         test = "x") %>% 
+  select(quarter_start_date, total)
+
+ggplot(total_rejections)+
+  geom_line(mapping = aes(x = quarter_start_date, y = total))+
+  labs(subtitle = "Total Quaraterly rejections",
+       y = "Cash assistance denials",
+       x = "Date",
+       title = "Cash Assistance Application denials are way up")
+
+write_csv(arrange(total_rejections, desc(quarter_start_date)), "data/total_denials.csv")
+
+# reasons
+
 rejection_reason_clean <- cash_assistance_rejections %>% 
   separate(date, sep = "-", into = c("quarter_start_date", "quarter_end_date")) %>% 
   separate(nys_wms_rejection_code, sep = "-", into = c("nys_wms_rejection_code", "rejection_code_description")) %>% 
@@ -135,9 +155,9 @@ rejection_reason_clean <- cash_assistance_rejections %>%
   filter(nys_wms_rejection_code != "Total", type_of_government_assistance == "Cash Assistance") %>% 
   select(1:7) %>% 
   group_by(quarter_start_date) %>% 
-  mutate(count = as.numeric(str_replace(total, "[*,]", "")),
-         total = sum(count, na.rm = T)
-         )%>% 
+  mutate(count = as.numeric(str_replace(total, "[*,]", "")))%>% 
+  select(-total) %>% 
+  left_join(total_rejections, by = c("quarter_start_date")) %>% 
   ungroup() %>% 
   replace_na(list("count" = 0)) %>% 
   mutate(proportion_rejections = count/total) %>% 
@@ -201,6 +221,8 @@ denials_wide <- rejection_reason_clean %>% filter(
 ) %>% 
   select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
   left_join(reasons) %>% 
+  mutate(rejection_code_description = if_else(rejection_code_description == "Case Closed/Rejected For Emergency Assistance", "Case Rejected For Emergency Assistance", rejection_code_description)) %>% 
+  filter(proportion_rejections != 0) %>% 
   group_by(quarter_start_date, rejection_code_description) %>% 
   summarize(proportion_rejections = max(proportion_rejections)*100) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
