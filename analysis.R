@@ -209,22 +209,50 @@ rejection_reason_clean %>% filter(nys_wms_rejection_code %in% top5,
 rejection_reason_clean %>% filter(
                                   quarter_start_date >= as.Date("2020-01-01")
 ) %>% 
-  select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
+  select(quarter_start_date, proportion_rejections, count, nys_wms_rejection_code) %>% 
   left_join(reasons) %>% 
   mutate(color = if_else(nys_wms_rejection_code == "E10", "blue", "gray")) %>% 
   ggplot()+
-  geom_line(aes(x = quarter_start_date, y = proportion_rejections, group=rejection_code_description, color = color))+
+  geom_line(aes(x = quarter_start_date, y = count, group=rejection_code_description, color = color))+
   scale_color_identity(labels = c(blue = "Failure to Keep/Complete",gray = "Other"),guide = "legend")
 
 denials_wide <- rejection_reason_clean %>% filter(
   quarter_start_date >= as.Date("2020-01-01")
 ) %>% 
-  select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
+  select(quarter_start_date, proportion_rejections, nys_wms_rejection_code, count) %>% 
   left_join(reasons) %>% 
   mutate(rejection_code_description = if_else(rejection_code_description == "Case Closed/Rejected For Emergency Assistance", "Case Rejected For Emergency Assistance", rejection_code_description)) %>% 
   filter(proportion_rejections != 0) %>% 
   group_by(quarter_start_date, rejection_code_description) %>% 
-  summarize(proportion_rejections = max(proportion_rejections)*100) %>% 
+  summarize(proportion_rejections = max(proportion_rejections)*100,
+            count = max(count)) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
-  
+
+
+
+
 write_csv(denials_wide, "data/denial_reasons.csv")
+
+###################### applications, denials ########################################
+
+apps_denials_series <- ca_apps_clean %>%
+  group_by(date = floor_date(valuedate, unit = "quarter")) %>% 
+  summarize(value = sum(acceptedvalue)) %>% 
+  filter(date >= as.Date("2019-07-01"), date <= as.Date("2023-07-01")) %>% 
+  arrange(date) %>% 
+  mutate(series = "Applications",
+         yoy = value/lag(value, n = 4),
+         qoq = value/lag(value, n = 1),
+         per_increase = (value/first(value)-1)*100) %>% 
+  bind_rows(total_rejections %>% 
+              select(date = quarter_start_date,
+                     value = total) %>% 
+              arrange(date) %>% 
+              mutate(series = "Denials",
+                      yoy = value/lag(value, n = 4),
+                      qoq = value/lag(value, n = 1),
+                     per_increase = (value/first(value)-1)*100)) %>% 
+  filter(month(date) %in% c(1, 4, 7, 10))
+
+ggplot(apps_denials_series)+
+  geom_line(mapping = aes(x = date, y = per_increase, color = series))
