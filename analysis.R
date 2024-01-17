@@ -76,7 +76,6 @@ pivot_longer(state_denial_categories, cols = starts_with("ta_"), names_to = "rea
 
 #################### MMR ###################
 
-
 cash_assistance_apps <- read_csv(URLencode("https://data.cityofnewyork.us/resource/rbed-zzin.csv?$where=id=10775&$limit=1000000"))
 
 cash_assistance_approval_rate <- read_csv(URLencode("https://data.cityofnewyork.us/resource/rbed-zzin.csv?$where=id=10776&$limit=1000000"))
@@ -227,9 +226,6 @@ denials_wide <- rejection_reason_clean %>% filter(
   summarize(proportion_rejections = max(proportion_rejections)*100,
             count = max(count)) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
-
-
-
 
 write_csv(denials_wide, "data/denial_reasons.csv")
 
