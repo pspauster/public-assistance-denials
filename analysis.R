@@ -82,8 +82,20 @@ cash_assistance_approval_rate <- read_csv(URLencode("https://data.cityofnewyork.
 
 hra_vars <- read_csv(URLencode("https://data.cityofnewyork.us/resource/rbed-zzin.csv?$where=agency='HRA'&$limit=1000000"))
 
-
+case_load <- read_csv(URLencode("https://data.cityofnewyork.us/resource/rbed-zzin.csv?$where=id=4167&$limit=1000000"))
 #################### # apps ##########################
+
+case_load_clean <- case_load %>% 
+  select(indicator, id, valuedate, acceptedvalue) %>% 
+  arrange(valuedate) %>% 
+  mutate(acceptedvalue = acceptedvalue * 1000)
+
+ggplot(case_load_clean)+
+  geom_line(mapping = aes(x = valuedate, y = acceptedvalue))+
+  labs(subtitle = "Monthly Cash Assistance case load since July 2015",
+       y = "Cash assistance caseload",
+       x = "Date",
+       title = "More People are on Cash Assistance")
 
 ca_apps_clean <- cash_assistance_apps %>% 
   select(indicator, id, valuedate, acceptedvalue) %>% 
@@ -174,7 +186,7 @@ reasons <- rejection_reason_clean %>%
   summarize(rejection_code_description = first(rejection_code_description))
 
 reason_sum <- rejection_reason_clean %>% 
-  filter(quarter_start_date > as.Date("2022-01-01")) %>% 
+  filter(quarter_start_date >= as.Date("2023-07-01")) %>% 
   group_by(nys_wms_rejection_code) %>% 
   summarize(total = sum(count)) %>% 
   arrange(desc(total)) %>% 
@@ -189,6 +201,10 @@ top10 <- reason_sum %>%
 top5 <- reason_sum %>% 
   head(5) %>% 
   pull(nys_wms_rejection_code)
+
+top7 <- reason_sum %>% 
+  head(7) %>% 
+  pull(rejection_code_description)
 
 reason_sum_quarters <- rejection_reason_clean %>% 
   filter(quarter_start_date > as.Date("2022-01-01"),
@@ -212,7 +228,7 @@ rejection_reason_clean %>% filter(
   left_join(reasons) %>% 
   mutate(color = if_else(nys_wms_rejection_code == "E10", "blue", "gray")) %>% 
   ggplot()+
-  geom_line(aes(x = quarter_start_date, y = count, group=rejection_code_description, color = color))+
+  geom_line(aes(x = quarter_start_date, y = proportion_rejections, group=rejection_code_description, color = color))+
   scale_color_identity(labels = c(blue = "Failure to Keep/Complete",gray = "Other"),guide = "legend")
 
 denials_wide <- rejection_reason_clean %>% filter(
@@ -220,12 +236,14 @@ denials_wide <- rejection_reason_clean %>% filter(
 ) %>% 
   select(quarter_start_date, proportion_rejections, nys_wms_rejection_code, count) %>% 
   left_join(reasons) %>% 
-  mutate(rejection_code_description = if_else(rejection_code_description == "Case Closed/Rejected For Emergency Assistance", "Case Rejected For Emergency Assistance", rejection_code_description)) %>% 
+  mutate(rejection_code_new = case_when(rejection_code_description == "Case Closed/Rejected For Emergency Assistance" ~ "Case Rejected For Emergency Assistance",
+                                        rejection_code_description %in% top7 ~ rejection_code_description,
+                                        T ~ "Other code")) %>% 
   filter(proportion_rejections != 0) %>% 
-  group_by(quarter_start_date, rejection_code_description) %>% 
+  group_by(quarter_start_date, rejection_code_new) %>% 
   summarize(proportion_rejections = max(proportion_rejections)*100,
             count = max(count)) %>% 
-  pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_description", values_from = "proportion_rejections")
+  pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_new", values_from = "proportion_rejections")
 
 write_csv(denials_wide, "data/denial_reasons.csv")
 
