@@ -270,3 +270,5 @@ apps_denials_series <- ca_apps_clean %>%
 
 ggplot(apps_denials_series)+
   geom_line(mapping = aes(x = date, y = per_increase, color = series))
+
+
