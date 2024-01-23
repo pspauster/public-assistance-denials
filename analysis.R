@@ -90,6 +90,13 @@ case_load_clean <- case_load %>%
   arrange(valuedate) %>% 
   mutate(acceptedvalue = acceptedvalue * 1000)
 
+case_load_clean %>% 
+  mutate(staggered_year = case_when(month(valuedate) > 10~year(valuedate)+1,
+                                    T ~ year(valuedate))) %>% 
+  group_by(staggered_year) %>% 
+  summarize(mean = mean(acceptedvalue))
+#use this to pull average caseload % increase
+
 ggplot(case_load_clean)+
   geom_line(mapping = aes(x = valuedate, y = acceptedvalue))+
   labs(subtitle = "Monthly Cash Assistance case load since July 2015",
