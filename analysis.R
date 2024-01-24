@@ -104,6 +104,10 @@ ggplot(case_load_clean)+
        x = "Date",
        title = "More People are on Cash Assistance")
 
+write_csv(case_load_clean %>% filter(valuedate >= "2019-10-01"), "data/caseload_monthly.csv")
+
+######## apps ################
+
 ca_apps_clean <- cash_assistance_apps %>% 
   select(indicator, id, valuedate, acceptedvalue) %>% 
   arrange(valuedate) %>% 
@@ -117,7 +121,7 @@ ggplot(ca_apps_clean)+
        x = "Date",
        title = "Cash Assistance Applications fose sharply in 2021")
 
-write_csv(ca_apps_clean, "data/applications_monthly.csv")
+write_csv(ca_apps_clean%>% filter(valuedate >= "2019-10-01"), "data/applications_monthly.csv")
 
 ggplot(ca_apps_clean)+
   geom_line(mapping = aes(x = valuedate, y = cumulative_apps))+
@@ -130,7 +134,10 @@ ggplot(ca_apps_clean)+
 
 ca_approval_clean <- cash_assistance_approval_rate %>% 
   select(indicator, id, valuedate, acceptedvalue) %>% 
-  arrange(valuedate)
+  arrange(valuedate) %>% 
+    mutate(acceptedvalue = if_else(valuedate == as.Date("2022-09-01"),
+                                   (lag(acceptedvalue, 1) + lead(acceptedvalue, 1))/2,
+                                   acceptedvalue))#impute 1 missing
 
 ggplot(ca_approval_clean)+
   geom_line(mapping = aes(x = valuedate, y = acceptedvalue))+
@@ -139,7 +146,7 @@ ggplot(ca_approval_clean)+
        x = "Date",
        title = "Cash Assistance Applications are getting denied more often")
 
-write_csv(ca_approval_clean, "data/approval_rate.csv")
+write_csv(ca_approval_clean%>% filter(valuedate >= "2019-10-01"), "data/approval_rate.csv")
 
 
 ############## rejection reasons ###########################
@@ -162,7 +169,7 @@ ggplot(total_rejections)+
        x = "Date",
        title = "Cash Assistance Application denials are way up")
 
-write_csv(arrange(total_rejections, desc(quarter_start_date)), "data/total_denials.csv")
+write_csv(arrange(total_rejections%>% filter(quarter_start_date >= "2019-10-01"), desc(quarter_start_date)), "data/total_denials.csv")
 
 # reasons
 
@@ -211,7 +218,7 @@ top5 <- reason_sum %>%
 
 top7 <- reason_sum %>% 
   head(7) %>% 
-  pull(rejection_code_description)
+  pull(nys_wms_rejection_code)
 
 reason_sum_quarters <- rejection_reason_clean %>% 
   filter(quarter_start_date > as.Date("2022-01-01"),
@@ -219,7 +226,7 @@ reason_sum_quarters <- rejection_reason_clean %>%
   group_by(nys_wms_rejection_code, quarter_start_date) %>% 
   arrange(nys_wms_rejection_code, quarter_start_date)
 
-rejection_reason_clean %>% filter(nys_wms_rejection_code %in% top5,
+rejection_reason_clean %>% filter(nys_wms_rejection_code %in% top7,
                                   quarter_start_date >= as.Date("2020-01-01")
                                   ) %>% 
   select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
@@ -239,20 +246,22 @@ rejection_reason_clean %>% filter(
   scale_color_identity(labels = c(blue = "Failure to Keep/Complete",gray = "Other"),guide = "legend")
 
 denials_wide <- rejection_reason_clean %>% filter(
-  quarter_start_date >= as.Date("2020-01-01")
+  quarter_start_date >= as.Date("2019-07-01")
 ) %>% 
   select(quarter_start_date, proportion_rejections, nys_wms_rejection_code, count) %>% 
   left_join(reasons) %>% 
-  mutate(rejection_code_new = case_when(rejection_code_description == "Case Closed/Rejected For Emergency Assistance" ~ "Case Rejected For Emergency Assistance",
-                                        rejection_code_description %in% top7 ~ rejection_code_description,
-                                        T ~ "Other code")) %>% 
+  mutate(rejection_code_new = case_when(rejection_code_description == "Case Closed/Rejected For Emergency Assistance" ~ paste0(nys_wms_rejection_code, " - ","Case Rejected For Emergency Assistance"),
+                                        rejection_code_description == "Failure to Keep/Complete Interview: No Schedule Appointment" ~paste0(nys_wms_rejection_code, " - ", "Failure to Complete Interview"),
+                                        nys_wms_rejection_code == "M66" ~ paste0(nys_wms_rejection_code, " - ", "Receiving assistance on another case"),
+                                        nys_wms_rejection_code %in% top5 ~ paste0(nys_wms_rejection_code, " - ",rejection_code_description),
+                                        T ~ "All Other Reasons")) %>% 
   filter(proportion_rejections != 0) %>% 
   group_by(quarter_start_date, rejection_code_new) %>% 
   summarize(proportion_rejections = max(proportion_rejections)*100,
             count = max(count)) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_new", values_from = "proportion_rejections")
 
-write_csv(denials_wide, "data/denial_reasons.csv")
+write_csv(denials_wide%>% filter(quarter_start_date >= "2019-10-01"), "data/denial_reasons.csv")
 
 ###################### applications, denials ########################################
 
