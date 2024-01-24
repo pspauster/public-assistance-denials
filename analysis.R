@@ -121,7 +121,7 @@ ggplot(ca_apps_clean)+
        x = "Date",
        title = "Cash Assistance Applications fose sharply in 2021")
 
-write_csv(ca_apps_clean%>% filter(valuedate >= "2019-10-01"), "data/applications_monthly.csv")
+write_csv(ca_apps_clean%>% filter(valuedate >= "2017-10-01"), "data/applications_monthly.csv")
 
 ggplot(ca_apps_clean)+
   geom_line(mapping = aes(x = valuedate, y = cumulative_apps))+
