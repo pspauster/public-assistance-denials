@@ -250,7 +250,7 @@ denials_wide <- rejection_reason_clean %>% filter(
 ) %>% 
   select(quarter_start_date, proportion_rejections, nys_wms_rejection_code, count) %>% 
   left_join(reasons) %>% 
-  mutate(rejection_code_new = case_when(rejection_code_description == "Case Closed/Rejected For Emergency Assistance" ~ paste0(nys_wms_rejection_code, " - ","Case Rejected For Emergency Assistance"),
+  mutate(rejection_code_new = case_when(rejection_code_description == "Case Closed/Rejected For Emergency Assistance" ~ paste0(nys_wms_rejection_code, " - ","Ineligible For Emergency Assistance"),
                                         rejection_code_description == "Failure to Keep/Complete Interview: No Schedule Appointment" ~paste0(nys_wms_rejection_code, " - ", "Failure to Complete Interview"),
                                         nys_wms_rejection_code == "M66" ~ paste0(nys_wms_rejection_code, " - ", "Receiving assistance on another case"),
                                         nys_wms_rejection_code %in% top5 ~ paste0(nys_wms_rejection_code, " - ",rejection_code_description),
