@@ -146,7 +146,7 @@ ggplot(ca_approval_clean)+
        x = "Date",
        title = "Cash Assistance Applications are getting denied more often")
 
-write_csv(ca_approval_clean%>% filter(valuedate >= "2019-10-01"), "data/approval_rate.csv")
+write_csv(ca_approval_clean%>% filter(valuedate >= "2017-10-01"), "data/approval_rate.csv")
 
 
 ############## rejection reasons ###########################
