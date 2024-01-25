@@ -104,7 +104,7 @@ ggplot(case_load_clean)+
        x = "Date",
        title = "More People are on Cash Assistance")
 
-write_csv(case_load_clean %>% filter(valuedate >= "2017-10-01"), "data/caseload_monthly.csv")
+write_csv(case_load_clean %>% filter(valuedate >= as.Date("2017-10-01")), "data/caseload_monthly.csv")
 
 ######## apps ################
 
@@ -121,7 +121,7 @@ ggplot(ca_apps_clean)+
        x = "Date",
        title = "Cash Assistance Applications fose sharply in 2021")
 
-write_csv(ca_apps_clean%>% filter(valuedate >= "2017-10-01"), "data/applications_monthly.csv")
+write_csv(ca_apps_clean%>% filter(valuedate >= as.Date("2017-10-01")), "data/applications_monthly.csv")
 
 ggplot(ca_apps_clean)+
   geom_line(mapping = aes(x = valuedate, y = cumulative_apps))+
@@ -146,7 +146,7 @@ ggplot(ca_approval_clean)+
        x = "Date",
        title = "Cash Assistance Applications are getting denied more often")
 
-write_csv(ca_approval_clean%>% filter(valuedate >= "2017-10-01"), "data/approval_rate.csv")
+write_csv(ca_approval_clean%>% filter(valuedate >= as.Date("2017-10-01")), "data/approval_rate.csv")
 
 
 ############## rejection reasons ###########################
@@ -169,7 +169,7 @@ ggplot(total_rejections)+
        x = "Date",
        title = "Cash Assistance Application denials are way up")
 
-write_csv(arrange(total_rejections%>% filter(quarter_start_date >= "2019-10-01"), desc(quarter_start_date)), "data/total_denials.csv")
+write_csv(arrange(total_rejections%>% filter(quarter_start_date >= as.Date("2017-10-01")), desc(quarter_start_date)), "data/total_denials.csv")
 
 # reasons
 
@@ -263,7 +263,7 @@ denials_wide <- rejection_reason_clean %>% filter(
             count = max(count)) %>% 
   pivot_wider(id_cols = "quarter_start_date",names_from = "rejection_code_new", values_from = "proportion_rejections")
 
-write_csv(denials_wide%>% filter(quarter_start_date >= "2019-10-01"), "data/denial_reasons.csv")
+write_csv(denials_wide%>% filter(quarter_start_date >= as.Date("2019-10-01")), "data/denial_reasons.csv")
 
 ###################### applications, denials ########################################
 

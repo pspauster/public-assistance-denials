@@ -1,4 +1,5 @@
 indicator,id,valuedate,acceptedvalue,cumulative_apps
+Cash assistance applications (000),10775,2017-10-01T00:00:00Z,30600,782800
 Cash assistance applications (000),10775,2017-11-01T00:00:00Z,28680,811480
 Cash assistance applications (000),10775,2017-12-01T00:00:00Z,27370,838850
 Cash assistance applications (000),10775,2018-01-01T00:00:00Z,30320,869170
