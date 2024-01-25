@@ -253,6 +253,7 @@ denials_wide <- rejection_reason_clean %>% filter(
   mutate(rejection_code_new = case_when(rejection_code_description == "Case Closed/Rejected For Emergency Assistance" ~ paste0(nys_wms_rejection_code, " - ","Ineligible for Emergency Assistance"),
                                         rejection_code_description == "Failure to Keep/Complete Interview: No Schedule Appointment" ~paste0(nys_wms_rejection_code, " - ", "Failure to Complete Interview"),
                                         rejection_code_description == "Excess Unearned Income Ineligible Budget Required" ~paste0(nys_wms_rejection_code, " - ", "Excess Unearned Income"),
+                                        rejection_code_description == "Excess Earned income" ~paste0(nys_wms_rejection_code, " - ", "Excess Earned Income"),
                                         nys_wms_rejection_code == "M66" ~ paste0(nys_wms_rejection_code, " - ", "Receiving Assistance on Another Case"),
                                         nys_wms_rejection_code == "M67" ~ paste0(nys_wms_rejection_code, " - ", "Part of Another Pending Application"),
                                         nys_wms_rejection_code %in% top8 ~ paste0(nys_wms_rejection_code, " - ",rejection_code_description),
