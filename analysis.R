@@ -104,7 +104,7 @@ ggplot(case_load_clean)+
        x = "Date",
        title = "More People are on Cash Assistance")
 
-write_csv(case_load_clean %>% filter(valuedate >= "2019-10-01"), "data/caseload_monthly.csv")
+write_csv(case_load_clean %>% filter(valuedate >= "2017-10-01"), "data/caseload_monthly.csv")
 
 ######## apps ################
 
