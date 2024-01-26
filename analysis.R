@@ -88,7 +88,8 @@ case_load <- read_csv(URLencode("https://data.cityofnewyork.us/resource/rbed-zzi
 case_load_clean <- case_load %>% 
   select(indicator, id, valuedate, acceptedvalue) %>% 
   arrange(valuedate) %>% 
-  mutate(acceptedvalue = acceptedvalue * 1000)
+  mutate(acceptedvalue = acceptedvalue * 1000,
+         valuedate = as.Date(valuedate))
 
 case_load_clean %>% 
   mutate(staggered_year = case_when(month(valuedate) > 10~year(valuedate)+1,
@@ -137,7 +138,8 @@ ca_approval_clean <- cash_assistance_approval_rate %>%
   arrange(valuedate) %>% 
     mutate(acceptedvalue = if_else(valuedate == as.Date("2022-09-01"),
                                    (lag(acceptedvalue, 1) + lead(acceptedvalue, 1))/2,
-                                   acceptedvalue))#impute 1 missing
+                                   acceptedvalue),
+           valuedate = as.Date(valuedate))#impute 1 missing
 
 ggplot(ca_approval_clean)+
   geom_line(mapping = aes(x = valuedate, y = acceptedvalue))+
@@ -226,7 +228,7 @@ reason_sum_quarters <- rejection_reason_clean %>%
   group_by(nys_wms_rejection_code, quarter_start_date) %>% 
   arrange(nys_wms_rejection_code, quarter_start_date)
 
-rejection_reason_clean %>% filter(nys_wms_rejection_code %in% top7,
+rejection_reason_clean %>% filter(nys_wms_rejection_code %in% top8,
                                   quarter_start_date >= as.Date("2020-01-01")
                                   ) %>% 
   select(quarter_start_date, proportion_rejections, nys_wms_rejection_code) %>% 
