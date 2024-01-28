@@ -107,7 +107,6 @@ ggplot(case_load_clean)+
 
 write_csv(case_load_clean %>% filter(valuedate >= as.Date("2017-10-01")), "data/caseload_monthly.csv")
 
-######## apps ################
 
 ca_apps_clean <- cash_assistance_apps %>% 
   select(indicator, id, valuedate, acceptedvalue) %>% 
